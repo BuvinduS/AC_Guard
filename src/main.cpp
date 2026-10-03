@@ -7,7 +7,9 @@
 #define IR_RECEIVE_PIN 4
 #endif
 
-IRrecv irrecv(IR_RECEIVE_PIN);
+// Initialize the IR receiver on GPIO 4, with buffer size of 1024, timeout of 50ms, and buffer save enabled.
+// See the library's IRrecvDumpV2 example for more details on the parameters.
+IRrecv irrecv(IR_RECEIVE_PIN, 1024, 50, true);
 decode_results results;
 
 void setup() {
@@ -22,7 +24,7 @@ void loop() {
   if (results.decode_type != UNKNOWN) {
     stdAc::state_t state{};
     if (IRAcUtils::decodeToState(&results, &state)) {
-      Serial.println(IRac::stateToString(&state));
+      Serial.println(IRAcUtils::resultAcToString(&results));
     }
   }
 
