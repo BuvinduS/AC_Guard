@@ -1,0 +1,69 @@
+name: CI
+
+# Runs on every push to every branch (tags excluded) and can be started by hand.
+on:
+  push:
+    branches: ["**"]
+  workflow_dispatch:
+
+# A newer push to the same branch cancels the older, still-running run.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Keep this equal to the output of `pio --version` on your machine, and bump
+  # it deliberately, so a PlatformIO release can't turn CI red by itself.
+  PIO_VERSION: "6.2.0"
+
+jobs:
+  unit-tests:
+    name: Unit tests (native)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-native-${{ env.PIO_VERSION }}-${{ hashFiles('platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install "platformio==${{ env.PIO_VERSION }}"
+
+      - name: Run unit tests
+        run: pio test -e native
+
+  firmware-build:
+    name: Firmware build (esp32dev)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-esp32dev-${{ env.PIO_VERSION }}-${{ hashFiles('platformio.ini') }}
+
+      - name: Install PlatformIO
+        run: pip install "platformio==${{ env.PIO_VERSION }}"
+
+      # Named explicitly: a bare `pio run` would also try to build the native
+      # env from src/main.cpp, which needs Arduino.h.
+      - name: Build firmware
+        run: pio run -e esp32dev
