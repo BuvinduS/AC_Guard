@@ -4,7 +4,7 @@
 #include "IRutils.h"
 
 #ifndef IR_RECEIVE_PIN
-#define IR_RECEIVE_PIN 22
+#define IR_RECEIVE_PIN 4
 #endif
 
 // Initialize the IR receiver on GPIO 4, with buffer size of 1024, timeout of 50ms, and buffer save enabled.
@@ -19,8 +19,11 @@ void setup() {
 }
 
 void loop() {
-  if (!irrecv.decode(&results)) {
-    Serial.println("Hi");
+  bool valid = irrecv.decode(&results);
+  Serial.println(valid ? "Valid signal received" : "No valid signal received");
+
+  if (!valid) {
+    // Serial.println("Hi");
     return;
   }
 
